@@ -1,0 +1,178 @@
+.container {
+  min-height: 100vh;
+  background-color: var(--color-background);
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 900;
+}
+
+.gameIdBox {
+  background-color: var(--color-surface);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  border: 2px dashed var(--color-blue);
+}
+
+.gameIdBox p {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
+.gameIdBox h3 {
+  font-family: monospace;
+  font-size: 1.25rem;
+  color: var(--color-text-primary);
+}
+
+.winnerBanner {
+  background-color: var(--color-surface);
+  padding: 2rem;
+  border-radius: 24px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  border: 4px solid gold;
+}
+
+.winnerBanner h2 {
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.adminGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .adminGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.card {
+  background-color: var(--color-surface);
+  padding: 2rem;
+  border-radius: 24px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+}
+
+.card h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.subtext {
+  color: var(--color-text-secondary);
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form label {
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 2px solid #E5E7EB;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  outline: none;
+  background-color: var(--color-background);
+}
+
+.input:focus {
+  border-color: var(--color-blue);
+}
+
+.teamSection {
+  margin-bottom: 2rem;
+}
+
+.textBlue { color: var(--color-blue); }
+.textRed { color: var(--color-red); }
+.textYellow { color: var(--color-yellow-dark); }
+.textOrange { color: var(--color-orange); }
+
+.clueList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 1rem;
+}
+
+.clueItem {
+  background-color: var(--color-background);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stepBadge {
+  background-color: var(--color-text-primary);
+  color: var(--color-surface);
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  align-self: flex-start;
+}
+
+.pinCode {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+.cluePreview {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
