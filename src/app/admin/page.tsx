@@ -127,6 +127,15 @@ export default function AdminDashboard() {
     }
   };
 
+  const resetActiveSession = async () => {
+    if (!activeGame) return;
+    if (confirm("Reset this game? This will unlock all teams and clear progress.")) {
+      await supabase.from("game_sessions").update({ winner_team_id: null, status: 'active' }).eq("id", activeGame.id);
+      await supabase.from("teams").update({ current_clue_index: 0, is_selected: false }).eq("game_id", activeGame.id);
+      alert("Game has been reset!");
+    }
+  };
+
   const addClue = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTeamId || !clueContent || !wellnessFact) return;
@@ -238,14 +247,21 @@ export default function AdminDashboard() {
               ))}
             </div>
 
-            <div className={styles.gameIdBox}>
-              <div>
-                <p>Session Direct Link</p>
-                <h3>{`${window.location.origin}/join?gameId=${activeGame.id}`}</h3>
+            <div className={styles.gameIdBox} style={{ flexDirection: 'column', gap: '1rem', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                <div>
+                  <p>Session Direct Link</p>
+                  <h3>{`${window.location.origin}/join?gameId=${activeGame.id}`}</h3>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn-bouncy btn-ink" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/join?gameId=${activeGame.id}`)}>
+                    <Copy size={16} style={{ marginRight: '0.5rem' }} /> Copy Link
+                  </button>
+                  <button className="btn-bouncy btn-red" onClick={resetActiveSession}>
+                    Reset Game
+                  </button>
+                </div>
               </div>
-              <button className="btn-bouncy btn-ink" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/join?gameId=${activeGame.id}`)}>
-                <Copy size={16} style={{ marginRight: '0.5rem' }} /> Copy Link
-              </button>
             </div>
 
             {winningTeam && (
