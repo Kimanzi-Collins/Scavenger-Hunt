@@ -33,7 +33,11 @@ export default function AdminDashboard() {
     fetchSessions();
 
     const channel = supabase.channel('admin-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_sessions' }, () => fetchSessions())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_sessions' }, (payload) => {
+        fetchSessions();
+        const updatedGame = payload.new as GameSession;
+        setActiveGame(current => (current && updatedGame && current.id === updatedGame.id) ? updatedGame : current);
+      })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, (payload) => {
         const newTeam = payload.new as Team;
         if (newTeam && activeGame && newTeam.game_id === activeGame.id) {
@@ -98,6 +102,13 @@ export default function AdminDashboard() {
         await supabase.from("clues").insert(testClues);
       }
       
+      // Automatic 5-minute reset for the test game
+      setTimeout(async () => {
+        console.log("Automatically resetting test game...");
+        await supabase.from("game_sessions").update({ winner_team_id: null, status: 'active' }).eq("id", game.id);
+        await supabase.from("teams").update({ current_clue_index: 0, is_selected: false }).eq("game_id", game.id);
+      }, 5 * 60 * 1000);
+
       fetchSessions();
       loadGameDetails(game);
       alert("Test game created! You can now go to Join and type 'test' as the code.");
