@@ -22,11 +22,8 @@ function JoinGameContent() {
   const searchParams = useSearchParams();
   const initialGameId = searchParams.get("gameId") || "";
 
-  // The splash screen is currently just our ID7 loader, but since we updated app/page.tsx,
-  // we actually might not need the splash screen if we don't want to show the old loader.
-  // The redesign notes say "there's no separate session-join step in the current flow" 
-  // but they still need to input the ID if they don't have the link. Let's keep the direct link working.
-  const [showSplash, setShowSplash] = useState(false); 
+  // If they arrived via a direct link, play the splash screen before showing the lobby
+  const [showSplash, setShowSplash] = useState(!!initialGameId); 
   const [gameId, setGameId] = useState(initialGameId);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(false);

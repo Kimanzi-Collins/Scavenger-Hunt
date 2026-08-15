@@ -1,107 +1,54 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
-import { Compass, Brain, Activity, Heart } from "lucide-react";
+import SplashScreen from "@/components/SplashScreen";
+import { Compass } from "lucide-react";
 
 export default function Home() {
-  const [step, setStep] = useState(0);
+  const [showSplash, setShowSplash] = useState(true);
   const router = useRouter();
 
-  // Neobrutalist Spring
   const neoSpring = { type: "spring", stiffness: 400, damping: 17 };
-
-  useEffect(() => {
-    // Sequence
-    const timers = [
-      setTimeout(() => setStep(1), 600),   // Beat 2: Made by ID7
-      setTimeout(() => setStep(2), 1400),  // Beat 3: Wellness text
-      setTimeout(() => setStep(3), 2400),  // Beat 4: Loading bar
-      setTimeout(() => setStep(4), 4000),  // Transition
-    ];
-
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
-  useEffect(() => {
-    if (step === 4) {
-      router.push('/join');
-    }
-  }, [step, router]);
 
   return (
     <main className={styles.main}>
-      <AnimatePresence>
-        {step < 4 && (
-          <motion.div className={styles.fullscreen} exit={{ y: -50, opacity: 0 }} transition={{ duration: 0.3 }}>
+      <AnimatePresence mode="wait">
+        {showSplash ? (
+          <SplashScreen key="splash" onComplete={() => setShowSplash(false)} />
+        ) : (
+          <motion.div
+            key="menu"
+            className={styles.menuContainer}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={neoSpring}
+          >
+            <div className={styles.logoBadge}>
+              <Compass size={40} color="var(--color-ink)" strokeWidth={2.5} />
+            </div>
             
-            {/* Beat 2: Credit Chip */}
-            <AnimatePresence>
-              {step >= 1 && (
-                <motion.div 
-                  className={styles.creditChip}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={neoSpring}
-                >
-                  Made by ID7 · Creative Edge
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Beat 1: Center Icon */}
-            <motion.div 
-              className={styles.heroIconBox}
-              initial={{ scale: 0, rotate: -45 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={neoSpring}
-            >
-              <Compass size={80} strokeWidth={3} />
-            </motion.div>
-
-            {/* Beat 3: Wellness */}
-            {step >= 2 && (
-              <motion.div 
-                className={styles.wellnessSection}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={neoSpring}
+            <h1 className={styles.mainTitle}>Wellness Hunt</h1>
+            
+            <div className={styles.actionButtons}>
+              <button 
+                className="btn-bouncy btn-blue"
+                onClick={() => router.push('/join')}
+                style={{ width: '100%', marginBottom: '1rem' }}
               >
-                <h1 className={styles.headline}>This hunt's for your whole self.</h1>
-                <div className={styles.chipRow}>
-                  <motion.div className={`${styles.wellnessChip} ${styles.chipBlue}`} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ ...neoSpring, delay: 0.1 }}>
-                    <Brain size={16} /> Mental
-                  </motion.div>
-                  <motion.div className={`${styles.wellnessChip} ${styles.chipOrange}`} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ ...neoSpring, delay: 0.2 }}>
-                    <Activity size={16} /> Physical
-                  </motion.div>
-                  <motion.div className={`${styles.wellnessChip} ${styles.chipPink}`} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ ...neoSpring, delay: 0.3 }}>
-                    <Heart size={16} /> Spiritual
-                  </motion.div>
-                </div>
-              </motion.div>
-            )}
-
-            {/* Beat 4: Loading Bar */}
-            {step >= 3 && (
-              <motion.div 
-                className={styles.loadingContainer}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                Join a Game
+              </button>
+              
+              <button 
+                className="btn-bouncy btn-yellow"
+                onClick={() => router.push('/admin')}
+                style={{ width: '100%' }}
               >
-                <div className={styles.loadingTrack}>
-                  <motion.div 
-                    className={styles.loadingFill}
-                    initial={{ width: "0%" }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: 1.2, ease: "circInOut" }}
-                  />
-                </div>
-              </motion.div>
-            )}
-
+                Admin Dashboard
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

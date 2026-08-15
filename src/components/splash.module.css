@@ -1,66 +1,100 @@
-.splashContainer {
+.fullscreen {
+  width: 100vw;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  width: 100%;
-  text-align: center;
   position: absolute;
   top: 0;
   left: 0;
-  background-color: var(--color-background);
-  z-index: 50;
+  padding: 2rem;
+  background-color: var(--color-yellow);
+  z-index: 100;
 }
 
-.introContainer {
+.creditChip {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  background: var(--color-paper);
+  border: var(--border-width) solid var(--color-ink);
+  box-shadow: 4px 4px 0 var(--color-ink);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.heroIconBox {
+  background: var(--color-blue);
+  color: white;
+  border: var(--border-width) solid var(--color-ink);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--color-ink);
+  padding: 2rem;
+  border-radius: var(--radius);
+  margin-bottom: 3rem;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
-.id7Title {
-  font-size: 3rem;
-  font-weight: 800;
-  color: var(--color-text-secondary);
-  letter-spacing: -0.02em;
+.wellnessSection {
+  text-align: center;
+  margin-bottom: 3rem;
+  width: 100%;
 }
 
-.highlight {
-  color: var(--color-blue);
-}
-
-.subtitle {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  opacity: 0.7;
-  margin-top: 0.5rem;
-}
-
-.iconPulse {
-  margin-bottom: 1.5rem;
-  animation: pulse 2s infinite ease-in-out;
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
-}
-
-.welcomeText {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--color-text-primary);
-  margin-bottom: 1rem;
+.headline {
+  font-size: 2rem;
   line-height: 1.1;
+  margin-bottom: 1.5rem;
+  color: var(--color-ink);
 }
 
-.wellnessText {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
+.chipRow {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.wellnessChip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: var(--border-width) solid var(--color-ink);
+  border-radius: var(--radius);
+  box-shadow: 4px 4px 0 var(--color-ink);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.chipBlue { background: var(--color-blue); color: white; }
+.chipOrange { background: var(--color-orange); color: var(--color-ink); }
+.chipPink { background: #F5A8C8; color: var(--color-ink); }
+
+.loadingContainer {
+  position: absolute;
+  bottom: 4rem;
+  width: calc(100% - 4rem);
+  max-width: 400px;
+}
+
+.loadingTrack {
+  width: 100%;
+  height: 24px;
+  background: var(--color-paper);
+  border: var(--border-width) solid var(--color-ink);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: inset 3px 3px 0 rgba(0,0,0,0.1);
+}
+
+.loadingFill {
+  height: 100%;
+  background: var(--color-red);
+  border-right: var(--border-width) solid var(--color-ink);
 }
