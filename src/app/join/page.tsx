@@ -38,11 +38,6 @@ function JoinGameContent() {
       const { data: latest } = await supabase.from("game_sessions").select("id").eq("status", "test").order("created_at", { ascending: false }).limit(1).single();
       if (latest) {
         searchId = latest.id;
-        
-        // INSTANT AUTOMATIC RESET for the next tester!
-        await supabase.from("game_sessions").update({ winner_team_id: null }).eq("id", latest.id);
-        await supabase.from("teams").update({ current_clue_index: 0, is_selected: false }).eq("game_id", latest.id);
-
       } else {
         setError("No test game available.");
         setLoading(false);

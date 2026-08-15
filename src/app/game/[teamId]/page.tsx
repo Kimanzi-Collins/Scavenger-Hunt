@@ -10,7 +10,7 @@ import { CheckCircle, QrCode, AlertCircle, Trophy, Users } from "lucide-react";
 
 type Team = { id: string; color: string; current_clue_index: number; game_id: string; is_selected: boolean };
 type Clue = { id: string; step_number: number; pin_code: string; content: string; wellness_fact: string };
-type GameSession = { id: string; winner_team_id: string | null };
+type GameSession = { id: string; winner_team_id: string | null; status: string };
 
 const FUNNY_GIFS = [
   "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2I3aGN0a2Z4Z2l6cjJ4cWFyZ3p2a2J3YXkyeWp1aGRxaXFzeHp0eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKSjRrfIPjeiVyM/giphy.gif",
@@ -70,6 +70,21 @@ export default function GamePage({ params }: { params: Promise<{ teamId: string 
 
     return () => { supabase.removeChannel(channel); };
   }, [team?.game_id]);
+
+  useEffect(() => {
+    // ARCADE MODE RESET: If this is a test game, automatically reset it 15 seconds after victory
+    if (gameSession?.winner_team_id && gameSession.status === 'test' && team && gameSession.winner_team_id === team.id) {
+      const timer = setTimeout(async () => {
+        console.log("Arcade Mode: Resetting test game for next group...");
+        await supabase.from("game_sessions").update({ winner_team_id: null }).eq("id", gameSession.id);
+        await supabase.from("teams").update({ current_clue_index: 0, is_selected: false }).eq("game_id", gameSession.id);
+        
+        // Push the winner back to the lobby so they can see it unlock
+        window.location.href = `/join?gameId=${gameSession.id}`;
+      }, 15000);
+      return () => clearTimeout(timer);
+    }
+  }, [gameSession?.winner_team_id, gameSession?.status, team?.id]);
 
   const fetchGameData = async () => {
     const { data: teamData } = await supabase.from("teams").select("*").eq("id", teamId).single();
@@ -190,19 +205,21 @@ export default function GamePage({ params }: { params: Promise<{ teamId: string 
           </div>
           <h3 style={{ marginTop: '1.5rem', fontFamily: 'var(--font-display)' }}>{lockedTeamsCount} / 4 Ready</h3>
           
-          <button 
-            className="btn-bouncy btn-ink" 
-            style={{ width: '100%', marginTop: '1.5rem', fontSize: '0.9rem' }}
-            onClick={async () => {
-              // Simulate other teams joining
-              const unselectedTeams = allTeams.filter(t => !t.is_selected && t.id !== team.id);
-              for (const ut of unselectedTeams) {
-                await supabase.from("teams").update({ is_selected: true }).eq("id", ut.id);
-              }
-            }}
-          >
-            [Dev] Simulate Others Joining
-          </button>
+          {gameSession.status === 'test' && (
+            <button 
+              className="btn-bouncy btn-ink" 
+              style={{ width: '100%', marginTop: '1.5rem', fontSize: '0.9rem' }}
+              onClick={async () => {
+                // Simulate other teams joining
+                const unselectedTeams = allTeams.filter(t => !t.is_selected && t.id !== team.id);
+                for (const ut of unselectedTeams) {
+                  await supabase.from("teams").update({ is_selected: true }).eq("id", ut.id);
+                }
+              }}
+            >
+              [Dev] Simulate Others Joining
+            </button>
+          )}
         </motion.div>
       </div>
     );
