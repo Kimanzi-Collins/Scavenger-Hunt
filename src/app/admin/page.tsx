@@ -8,10 +8,10 @@ import styles from "./admin.module.css";
 import { motion, AnimatePresence } from "framer-motion";
 
 type GameSession = { id: string; status: string; winner_team_id: string | null; created_at: string };
-type Team = { id: string; color: string; current_clue_index: number; is_selected: boolean };
+type Team = { id: string; game_id: string; color: string; current_clue_index: number; is_selected: boolean };
 type Clue = { id: string; team_id: string; step_number: number; pin_code: string; content: string; wellness_fact: string };
 
-const neoSpring = { type: "spring", stiffness: 400, damping: 17 };
+const neoSpring = { type: "spring" as const, stiffness: 400, damping: 17 };
 
 export default function AdminDashboard() {
   const [sessions, setSessions] = useState<GameSession[]>([]);
@@ -35,8 +35,9 @@ export default function AdminDashboard() {
     const channel = supabase.channel('admin-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'game_sessions' }, () => fetchSessions())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, (payload) => {
-        if (payload.new && 'game_id' in payload.new && activeGame && payload.new.game_id === activeGame.id) {
-            setTeams(current => current.map(t => t.id === payload.new.id ? payload.new as Team : t));
+        const newTeam = payload.new as Team;
+        if (newTeam && activeGame && newTeam.game_id === activeGame.id) {
+            setTeams(current => current.map(t => t.id === newTeam.id ? newTeam : t));
         }
       })
       .subscribe();
@@ -221,7 +222,7 @@ export default function AdminDashboard() {
                 <div key={t.id} className={`${styles.leaderboardCard} ${styles[`bg${t.color}`]}`}>
                   <span className={styles.lbColor}>{t.color}</span>
                   <span className={styles.lbStep}>Step {t.current_clue_index}</span>
-                  {t.is_selected && <Check size={16} title="Locked in" />}
+                  {t.is_selected && <Check size={16} />}
                 </div>
               ))}
             </div>

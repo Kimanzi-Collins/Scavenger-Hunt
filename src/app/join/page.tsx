@@ -15,7 +15,7 @@ type Team = {
 };
 
 // Neobrutalist Spring Config
-const neoSpring = { type: "spring", stiffness: 400, damping: 17 };
+const neoSpring = { type: "spring" as const, stiffness: 400, damping: 17 };
 
 function JoinGameContent() {
   const router = useRouter();

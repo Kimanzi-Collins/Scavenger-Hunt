@@ -19,7 +19,7 @@ const FUNNY_GIFS = [
   "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaG1tNXh6Z3V5dWJ5M2Z2b2F5ZWQzajF5ejF6M3V6OXJzYnJzYnJzZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/13CoXDiaCcCoyk/giphy.gif"
 ];
 
-const neoSpring = { type: "spring", stiffness: 400, damping: 17 };
+const neoSpring = { type: "spring" as const, stiffness: 400, damping: 17 };
 
 export default function GamePage({ params }: { params: Promise<{ teamId: string }> }) {
   const { teamId } = use(params);

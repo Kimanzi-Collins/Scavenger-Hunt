@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Compass, Brain, Activity, Heart } from "lucide-react";
 import styles from "./splash.module.css";
 
-const neoSpring = { type: "spring", stiffness: 400, damping: 17 };
+const neoSpring = { type: "spring" as const, stiffness: 400, damping: 17 };
 
 export default function SplashScreen({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(0);

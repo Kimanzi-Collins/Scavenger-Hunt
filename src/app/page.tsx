@@ -11,7 +11,7 @@ export default function Home() {
   const [showSplash, setShowSplash] = useState(true);
   const router = useRouter();
 
-  const neoSpring = { type: "spring", stiffness: 400, damping: 17 };
+  const neoSpring = { type: "spring" as const, stiffness: 400, damping: 17 };
 
   return (
     <main className={styles.main}>
