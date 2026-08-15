@@ -83,7 +83,7 @@ export default function AdminDashboard() {
 
   const createTestGame = async () => {
     setLoading(true);
-    const { data: game, error: gameError } = await supabase.from("game_sessions").insert([{ status: "active" }]).select().single();
+    const { data: game, error: gameError } = await supabase.from("game_sessions").insert([{ status: "test" }]).select().single();
     if (game) {
       const colors = ["Blue", "Red", "Yellow", "Orange"];
       const teamInserts = colors.map(c => ({ game_id: game.id, color: c }));
@@ -101,13 +101,6 @@ export default function AdminDashboard() {
         }));
         await supabase.from("clues").insert(testClues);
       }
-      
-      // Automatic 5-minute reset for the test game
-      setTimeout(async () => {
-        console.log("Automatically resetting test game...");
-        await supabase.from("game_sessions").update({ winner_team_id: null, status: 'active' }).eq("id", game.id);
-        await supabase.from("teams").update({ current_clue_index: 0, is_selected: false }).eq("game_id", game.id);
-      }, 5 * 60 * 1000);
 
       fetchSessions();
       loadGameDetails(game);
