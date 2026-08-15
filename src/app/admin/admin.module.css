@@ -46,6 +46,24 @@
   font-family: monospace;
   font-size: 1.25rem;
   color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.copyButton {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-blue);
+  background: rgba(28, 176, 246, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copyButton:hover {
+  background: rgba(28, 176, 246, 0.2);
 }
 
 .winnerBanner {

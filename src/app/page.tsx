@@ -1,66 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 import { HeartPulse } from "lucide-react";
+import SplashScreen from "@/components/SplashScreen";
 
 export default function Home() {
-  const [loadingStep, setLoadingStep] = useState(0);
+  const [showSplash, setShowSplash] = useState(true);
   const router = useRouter();
-
-  useEffect(() => {
-    // Sequence the loading animations
-    const timer1 = setTimeout(() => setLoadingStep(1), 2500); // After ID7 logo
-    const timer2 = setTimeout(() => setLoadingStep(2), 5500); // Show main menu
-
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
-  }, []);
 
   return (
     <main className={styles.main}>
       <AnimatePresence mode="wait">
-        {loadingStep === 0 && (
+        {showSplash ? (
+          <SplashScreen key="splash" onComplete={() => setShowSplash(false)} />
+        ) : (
           <motion.div
-            key="step0"
-            className={styles.introContainer}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <h1 className={styles.id7Title}>
-              Made by <span className={styles.highlight}>ID7</span>
-            </h1>
-            <p className={styles.subtitle}>Creative Edge</p>
-          </motion.div>
-        )}
-
-        {loadingStep === 1 && (
-          <motion.div
-            key="step1"
-            className={styles.introContainer}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 1.1 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <HeartPulse size={64} className={styles.iconPulse} color="var(--color-red)" />
-            <h2 className={styles.welcomeText}>Welcome to the Hunt</h2>
-            <p className={styles.wellnessText}>
-              In recognition of wellness<br />
-              (mental, physical, spiritual)
-            </p>
-          </motion.div>
-        )}
-
-        {loadingStep === 2 && (
-          <motion.div
-            key="step2"
+            key="menu"
             className={styles.menuContainer}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}

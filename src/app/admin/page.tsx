@@ -74,6 +74,8 @@ export default function AdminDashboard() {
       const teamInserts = colors.map(c => ({ game_id: game.id, color: c }));
       await supabase.from("teams").insert(teamInserts);
       fetchActiveGame();
+    } else {
+      alert("Error creating game! Did you set up .env.local with Supabase keys?\n\nDetails: " + (gameError?.message || "Unknown error"));
     }
     setLoading(false);
   };
@@ -123,6 +125,16 @@ export default function AdminDashboard() {
           <div className={styles.gameIdBox}>
             <p>Session ID (Share this):</p>
             <h3>{activeGame.id}</h3>
+            <button 
+              className={styles.copyButton}
+              onClick={() => {
+                const link = `${window.location.origin}/join?gameId=${activeGame.id}`;
+                navigator.clipboard.writeText(link);
+                alert("Direct Join Link copied to clipboard!");
+              }}
+            >
+              <Copy size={16} style={{ marginRight: '0.5rem' }} /> Copy Direct Join Link
+            </button>
           </div>
         )}
       </header>
