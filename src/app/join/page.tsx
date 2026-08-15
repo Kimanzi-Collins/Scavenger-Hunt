@@ -21,9 +21,10 @@ function JoinGameContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialGameId = searchParams.get("gameId") || "";
+  const skipSplash = searchParams.get("skipSplash") === "true";
 
-  // If they arrived via a direct link, play the splash screen before showing the lobby
-  const [showSplash, setShowSplash] = useState(!!initialGameId); 
+  // If they arrived via ANY direct link, play the splash screen before showing the lobby
+  const [showSplash, setShowSplash] = useState(!skipSplash); 
   const [gameId, setGameId] = useState(initialGameId);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(false);

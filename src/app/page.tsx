@@ -11,7 +11,7 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
-      <SplashScreen key="splash" onComplete={() => router.push('/join')} />
+      <SplashScreen key="splash" onComplete={() => router.push('/join?skipSplash=true')} />
     </main>
   );
 }

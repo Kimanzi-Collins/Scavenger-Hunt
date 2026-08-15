@@ -123,7 +123,7 @@ export default function AdminDashboard() {
   const resetActiveSession = async () => {
     if (!activeGame) return;
     if (confirm("Reset this game? This will unlock all teams and clear progress.")) {
-      await supabase.from("game_sessions").update({ winner_team_id: null, status: 'active' }).eq("id", activeGame.id);
+      await supabase.from("game_sessions").update({ winner_team_id: null }).eq("id", activeGame.id);
       await supabase.from("teams").update({ current_clue_index: 0, is_selected: false }).eq("game_id", activeGame.id);
       alert("Game has been reset!");
     }

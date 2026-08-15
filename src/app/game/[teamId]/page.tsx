@@ -81,7 +81,7 @@ export default function GamePage({ params }: { params: Promise<{ teamId: string 
         
         // Push the winner back to the lobby so they can see it unlock
         window.location.href = `/join?gameId=${gameSession.id}`;
-      }, 15000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [gameSession?.winner_team_id, gameSession?.status, team?.id]);
