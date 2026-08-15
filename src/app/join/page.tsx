@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import styles from "./join.module.css";
 import { ChevronLeft, Lock } from "lucide-react";
 import SplashScreen from "@/components/SplashScreen";
-import { AnimatePresence } from "framer-motion";
 
 type Team = {
   id: string;
@@ -15,12 +14,19 @@ type Team = {
   is_selected: boolean;
 };
 
+// Neobrutalist Spring Config
+const neoSpring = { type: "spring", stiffness: 400, damping: 17 };
+
 function JoinGameContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialGameId = searchParams.get("gameId") || "";
 
-  const [showSplash, setShowSplash] = useState(!!initialGameId);
+  // The splash screen is currently just our ID7 loader, but since we updated app/page.tsx,
+  // we actually might not need the splash screen if we don't want to show the old loader.
+  // The redesign notes say "there's no separate session-join step in the current flow" 
+  // but they still need to input the ID if they don't have the link. Let's keep the direct link working.
+  const [showSplash, setShowSplash] = useState(false); 
   const [gameId, setGameId] = useState(initialGameId);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,23 +35,33 @@ function JoinGameContent() {
   const fetchTeams = async (id: string) => {
     setLoading(true);
     setError("");
-    const { data, error } = await supabase
-      .from("teams")
-      .select("*")
-      .eq("game_id", id)
-      .order("color");
+    
+    let searchId = id;
+    if (id.toLowerCase() === "test") {
+      const { data: latest } = await supabase.from("game_sessions").select("id").order("created_at", { ascending: false }).limit(1).single();
+      if (latest) {
+        searchId = latest.id;
+      } else {
+        setError("No test game available.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    const { data, error } = await supabase.from("teams").select("*").eq("game_id", searchId).order("color");
 
     if (error) {
-      setError("Failed to find game. Check the ID.");
+      setError("Failed to find game.");
     } else if (data && data.length === 0) {
       setError("No teams found for this game.");
     } else if (data) {
       setTeams(data);
+      // Update the URL so realtime works properly on the actual ID
+      setGameId(searchId); 
     }
     setLoading(false);
   };
 
-  // If there's an initial gameId from the URL, automatically fetch teams
   useEffect(() => {
     if (initialGameId) {
       fetchTeams(initialGameId);
@@ -55,52 +71,29 @@ function JoinGameContent() {
   useEffect(() => {
     if (!gameId || teams.length === 0) return;
 
-    // Subscribe to realtime team selection updates
-    const channel = supabase
-      .channel(`teams:game_id=eq.${gameId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "teams",
-          filter: `game_id=eq.${gameId}`,
-        },
-        (payload) => {
-          setTeams((current) =>
-            current.map((t) =>
-              t.id === payload.new.id ? { ...t, is_selected: payload.new.is_selected } : t
-            )
-          );
-        }
-      )
-      .subscribe();
+    const channel = supabase.channel(`teams:game_id=eq.${gameId}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "teams", filter: `game_id=eq.${gameId}` }, (payload) => {
+        setTeams((current) => current.map((t) => t.id === payload.new.id ? { ...t, is_selected: payload.new.is_selected } : t));
+      }).subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [gameId, teams.length]);
 
   const selectTeam = async (team: Team) => {
     if (team.is_selected) return;
 
-    // Optimistic lock
-    setTeams((current) =>
-      current.map((t) => (t.id === team.id ? { ...t, is_selected: true } : t))
-    );
+    // Optimistic Lock Thump
+    setTeams(current => current.map(t => (t.id === team.id ? { ...t, is_selected: true } : t)));
 
-    const { error } = await supabase
-      .from("teams")
-      .update({ is_selected: true })
-      .eq("id", team.id)
-      .eq("is_selected", false); // ensure it wasn't just taken
+    const { error } = await supabase.from("teams").update({ is_selected: true }).eq("id", team.id).eq("is_selected", false);
 
     if (error) {
       alert("This team was already taken!");
-      fetchTeams(gameId); // refresh
+      fetchTeams(gameId);
     } else {
-      // Proceed to game
-      router.push(`/game/${team.id}`);
+      setTimeout(() => {
+        router.push(`/game/${team.id}`);
+      }, 600); // Give time for the satisfying thump animation before navigating
     }
   };
 
@@ -113,53 +106,57 @@ function JoinGameContent() {
       {!showSplash && (
         <div className={styles.container}>
           <button className={styles.backButton} onClick={() => router.push('/')}>
-            <ChevronLeft size={24} /> Back
+            <ChevronLeft size={24} strokeWidth={3} /> Home
           </button>
 
-          <motion.div 
-            className={styles.content}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <h1 className={styles.title}>Join a Game</h1>
+          <motion.div className={styles.content} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={neoSpring}>
+            <h1 className={styles.title}>Join Lobby</h1>
             
             {teams.length === 0 ? (
-              <div className={styles.inputGroup}>
-                <p className={styles.label}>Enter Game Session ID</p>
-                <input 
-                  type="text" 
-                  className={styles.input}
-                  placeholder="e.g. 1234-5678..."
-                  value={gameId}
-                  onChange={(e) => setGameId(e.target.value)}
-                />
+              <div className="neo-card">
+                <p className={styles.label}>Enter Session ID</p>
+                <input type="text" className={styles.input} placeholder="e.g. 1234-5678" value={gameId} onChange={(e) => setGameId(e.target.value)} />
                 {error && <p className={styles.error}>{error}</p>}
-                <button 
-                  className="btn-bouncy btn-blue" 
-                  style={{ width: '100%', marginTop: '1rem' }}
-                  onClick={() => fetchTeams(gameId)}
-                  disabled={loading || !gameId}
-                >
-                  {loading ? "Searching..." : "Find Game"}
+                <button className="btn-bouncy btn-blue" style={{ width: '100%', marginTop: '1rem' }} onClick={() => fetchTeams(gameId)} disabled={loading || !gameId}>
+                  {loading ? "Searching..." : "Enter Lobby"}
                 </button>
               </div>
             ) : (
               <div className={styles.teamSelection}>
-                <p className={styles.label}>Select your Team</p>
+                <p className={styles.label}>Lock in your team</p>
                 <div className={styles.grid}>
-                  {teams.map((team) => (
-                    <motion.button
-                      key={team.id}
-                      whileHover={!team.is_selected ? { scale: 1.05 } : {}}
-                      whileTap={!team.is_selected ? { scale: 0.95 } : {}}
-                      className={`${styles.teamCard} ${styles[`team${team.color}`]} ${team.is_selected ? styles.taken : ''}`}
-                      onClick={() => selectTeam(team)}
-                      disabled={team.is_selected}
-                    >
-                      {team.is_selected && <Lock className={styles.lockIcon} size={32} />}
-                      <span>{team.color}</span>
-                    </motion.button>
-                  ))}
+                  {teams.map((team, index) => {
+                    const isTakenByOther = team.is_selected; // if it's selected, it's locked.
+                    
+                    return (
+                      <motion.button
+                        key={team.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ ...neoSpring, delay: index * 0.07 }}
+                        whileTap={!isTakenByOther ? { scale: 0.9, x: 6, y: 6, boxShadow: "0 0 0 #0D0D0D" } : {}}
+                        className={`${styles.teamCard} ${styles[`team${team.color}`]} ${isTakenByOther ? styles.taken : ''}`}
+                        onClick={() => selectTeam(team)}
+                        disabled={isTakenByOther}
+                      >
+                        <span>{team.color}</span>
+                        
+                        <AnimatePresence>
+                          {isTakenByOther && (
+                            <motion.div 
+                              className={styles.lockBadge}
+                              initial={{ scale: 0, rotate: -45 }}
+                              animate={{ scale: 1, rotate: 0 }}
+                              transition={neoSpring}
+                            >
+                              <Lock size={20} strokeWidth={3} />
+                              <span>Taken</span>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.button>
+                    )
+                  })}
                 </div>
               </div>
             )}

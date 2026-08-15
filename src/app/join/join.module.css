@@ -1,76 +1,60 @@
 .container {
   min-height: 100vh;
-  padding: 2rem;
-  background-color: var(--color-background);
+  padding: 1.5rem;
+  background-color: var(--color-paper);
 }
 
 .backButton {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
   font-weight: 700;
-  color: var(--color-text-secondary);
-  font-size: 1.1rem;
+  font-size: 1rem;
+  color: var(--color-ink);
   margin-bottom: 2rem;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.backButton:hover {
-  opacity: 0.7;
 }
 
 .content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  max-width: 400px;
+  width: 100%;
+  max-width: 500px;
   margin: 0 auto;
 }
 
 .title {
   font-size: 2.5rem;
-  font-weight: 900;
-  color: var(--color-text-primary);
   margin-bottom: 2rem;
-  text-align: center;
-}
-
-.inputGroup, .teamSelection {
-  width: 100%;
-  background: var(--color-surface);
-  padding: 1.5rem;
-  border-radius: 24px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
-}
-
-.label {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  margin-bottom: 1rem;
   text-align: center;
 }
 
 .input {
   width: 100%;
   padding: 1rem;
-  border-radius: 12px;
-  border: 2px solid #E5E7EB;
-  font-size: 1.125rem;
-  font-family: inherit;
-  font-weight: 600;
-  text-align: center;
+  border: var(--border-width) solid var(--color-ink);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: white;
   outline: none;
-  transition: border-color var(--transition-fast);
+  margin-top: 0.5rem;
 }
 
 .input:focus {
-  border-color: var(--color-blue);
+  box-shadow: 4px 4px 0 var(--color-ink);
+}
+
+.label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  text-align: center;
 }
 
 .error {
   color: var(--color-red);
-  font-weight: 600;
+  font-weight: 700;
   margin-top: 0.5rem;
   text-align: center;
 }
@@ -78,38 +62,56 @@
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .teamCard {
+  position: relative;
+  width: 100%;
   aspect-ratio: 1;
-  border-radius: 20px;
+  border-radius: var(--radius);
+  border: var(--border-width) solid var(--color-ink);
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--color-ink);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: white;
-  position: relative;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  transition: transform 0.15s, box-shadow 0.15s;
   overflow: hidden;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
 }
 
-.teamBlue { background-color: var(--color-blue); box-shadow: 0 4px 0 var(--color-blue-dark); }
-.teamRed { background-color: var(--color-red); box-shadow: 0 4px 0 var(--color-red-dark); }
-.teamYellow { background-color: var(--color-yellow); box-shadow: 0 4px 0 var(--color-yellow-dark); color: var(--color-text-primary); }
-.teamOrange { background-color: var(--color-orange); box-shadow: 0 4px 0 var(--color-orange-dark); }
+.teamCard:hover:not(.taken) {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 var(--color-ink);
+}
 
+.teamBlue { background-color: var(--color-blue); color: white; }
+.teamRed { background-color: var(--color-red); color: white; }
+.teamYellow { background-color: var(--color-yellow); color: var(--color-ink); }
+.teamOrange { background-color: var(--color-orange); color: var(--color-ink); }
+
+/* Taken state: desaturate, dashed border */
 .taken {
   opacity: 0.5;
-  filter: grayscale(0.8);
-  cursor: not-allowed;
-  box-shadow: none !important;
-  transform: translateY(4px);
+  border-style: dashed;
+  box-shadow: 0 0 0 transparent !important;
+  transform: translate(var(--shadow-offset), var(--shadow-offset)) !important;
 }
 
-.lockIcon {
-  margin-bottom: 0.5rem;
-  opacity: 0.8;
+.lockBadge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-ink);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  box-shadow: none;
 }

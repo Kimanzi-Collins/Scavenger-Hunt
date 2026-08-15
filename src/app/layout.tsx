@@ -1,21 +1,27 @@
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
+import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 
-const nunito = Nunito({
-  variable: "--font-nunito",
+const space = Space_Grotesk({
+  variable: "--font-space",
   subsets: ["latin"],
-  weight: ["400", "600", "700", "800", "900"],
+  weight: ["400", "700"],
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "900"],
 });
 
 export const metadata: Metadata = {
-  title: "Scavenger Hunt | Wellness Edition",
-  description: "A super animated, mobile-first wellness scavenger hunt game.",
+  title: "Scavenger Hunt | Neobrutalist Edition",
+  description: "A bold, physical, neobrutalist scavenger hunt.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${nunito.variable}`}>
+    <html lang="en" className={`${space.variable} ${inter.variable}`}>
       <body>{children}</body>
     </html>
   );

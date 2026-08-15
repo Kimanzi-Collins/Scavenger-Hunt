@@ -8,8 +8,10 @@ import styles from "./admin.module.css";
 import { motion, AnimatePresence } from "framer-motion";
 
 type GameSession = { id: string; status: string; winner_team_id: string | null; created_at: string };
-type Team = { id: string; color: string; completed_at: string | null };
+type Team = { id: string; color: string; current_clue_index: number; is_selected: boolean };
 type Clue = { id: string; team_id: string; step_number: number; pin_code: string; content: string; wellness_fact: string };
+
+const neoSpring = { type: "spring", stiffness: 400, damping: 17 };
 
 export default function AdminDashboard() {
   const [sessions, setSessions] = useState<GameSession[]>([]);
@@ -19,12 +21,10 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // New Clue Form State
   const [selectedTeamId, setSelectedTeamId] = useState<string>("");
   const [clueContent, setClueContent] = useState("");
   const [wellnessFact, setWellnessFact] = useState("");
   
-  // Edit Clue State
   const [editingClueId, setEditingClueId] = useState<string | null>(null);
   const [editClueContent, setEditClueContent] = useState("");
   const [editWellnessFact, setEditWellnessFact] = useState("");
@@ -33,9 +33,7 @@ export default function AdminDashboard() {
     fetchSessions();
 
     const channel = supabase.channel('admin-updates')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_sessions' }, () => {
-        fetchSessions();
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_sessions' }, () => fetchSessions())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, (payload) => {
         if (payload.new && 'game_id' in payload.new && activeGame && payload.new.game_id === activeGame.id) {
             setTeams(current => current.map(t => t.id === payload.new.id ? payload.new as Team : t));
@@ -65,12 +63,7 @@ export default function AdminDashboard() {
 
   const createNewGame = async () => {
     setLoading(true);
-    const { data: game, error: gameError } = await supabase
-      .from("game_sessions")
-      .insert([{ status: "active" }])
-      .select()
-      .single();
-
+    const { data: game, error: gameError } = await supabase.from("game_sessions").insert([{ status: "active" }]).select().single();
     if (game) {
       const colors = ["Blue", "Red", "Yellow", "Orange"];
       const teamInserts = colors.map(c => ({ game_id: game.id, color: c }));
@@ -78,14 +71,44 @@ export default function AdminDashboard() {
       fetchSessions();
       loadGameDetails(game);
     } else {
-      alert("Error creating game! Did you set up .env.local with Supabase keys?\n\nDetails: " + (gameError?.message || "Unknown error"));
+      alert("Error creating game: " + (gameError?.message || "Unknown error"));
+    }
+    setLoading(false);
+  };
+
+  const createTestGame = async () => {
+    setLoading(true);
+    const { data: game, error: gameError } = await supabase.from("game_sessions").insert([{ status: "active" }]).select().single();
+    if (game) {
+      const colors = ["Blue", "Red", "Yellow", "Orange"];
+      const teamInserts = colors.map(c => ({ game_id: game.id, color: c }));
+      
+      const { data: createdTeams } = await supabase.from("teams").insert(teamInserts).select();
+      
+      if (createdTeams) {
+        // Create 1 clue for each team with pin '123456' so you win automatically after 1 scan
+        const testClues = createdTeams.map(t => ({
+          team_id: t.id,
+          step_number: 1,
+          pin_code: '123456',
+          content: 'This is the test clue. Scan the 123456 QR code to win!',
+          wellness_fact: 'Did you know? Taking breaks makes you 50% more productive!'
+        }));
+        await supabase.from("clues").insert(testClues);
+      }
+      
+      fetchSessions();
+      loadGameDetails(game);
+      alert("Test game created! You can now go to Join and type 'test' as the code.");
+    } else {
+      alert("Error creating test game: " + (gameError?.message || "Unknown error"));
     }
     setLoading(false);
   };
 
   const deleteSession = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Are you sure you want to delete this game session? All associated teams and clues will be deleted.")) {
+    if (confirm("Are you sure? Delete this session?")) {
       await supabase.from("game_sessions").delete().eq("id", id);
       if (activeGame?.id === id) setActiveGame(null);
       fetchSessions();
@@ -101,20 +124,14 @@ export default function AdminDashboard() {
     const stepNumber = teamClues.length + 1;
 
     const { data, error } = await supabase.from("clues").insert([{
-      team_id: selectedTeamId,
-      step_number: stepNumber,
-      pin_code: pin,
-      content: clueContent,
-      wellness_fact: wellnessFact
+      team_id: selectedTeamId, step_number: stepNumber, pin_code: pin, content: clueContent, wellness_fact: wellnessFact
     }]).select().single();
 
     if (data) {
       setClues([...clues, data]);
       setClueContent("");
       setWellnessFact("");
-    } else {
-      alert("Error adding clue: " + error?.message);
-    }
+    } else alert("Error adding clue: " + error?.message);
   };
 
   const deleteClue = async (id: string) => {
@@ -130,23 +147,11 @@ export default function AdminDashboard() {
     setEditWellnessFact(clue.wellness_fact);
   };
 
-  const cancelEdit = () => {
-    setEditingClueId(null);
-    setEditClueContent("");
-    setEditWellnessFact("");
-  };
-
   const saveEditClue = async (id: string) => {
-    const { data, error } = await supabase.from("clues")
-      .update({ content: editClueContent, wellness_fact: editWellnessFact })
-      .eq("id", id)
-      .select().single();
-
+    const { data } = await supabase.from("clues").update({ content: editClueContent, wellness_fact: editWellnessFact }).eq("id", id).select().single();
     if (data) {
       setClues(clues.map(c => c.id === id ? data : c));
       setEditingClueId(null);
-    } else {
-      alert("Error saving clue: " + error?.message);
     }
   };
 
@@ -157,70 +162,89 @@ export default function AdminDashboard() {
       <header className={styles.header}>
         {activeGame ? (
           <button className={styles.backButton} onClick={() => setActiveGame(null)}>
-            <ChevronLeft size={24} /> Back to Sessions
+            <ChevronLeft size={24} strokeWidth={3} /> Back
           </button>
         ) : (
           <button className={styles.backButton} onClick={() => router.push('/')}>
-            <ChevronLeft size={24} /> Home
+            <ChevronLeft size={24} strokeWidth={3} /> Home
           </button>
         )}
-        <h1 className={styles.title}>Admin Dashboard</h1>
+        <h1 className={styles.title}>Admin Workspace</h1>
       </header>
 
       <AnimatePresence mode="wait">
         {!activeGame ? (
-          <motion.main key="session-list" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-            <div className={styles.sessionHeader}>
-              <h2>Game Sessions</h2>
+          <motion.main key="session-list" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={neoSpring}>
+            <div className={styles.sessionHeader} style={{ display: 'flex', gap: '1rem' }}>
               <button className="btn-bouncy btn-blue" onClick={createNewGame} disabled={loading}>
                 <Plus size={20} style={{ marginRight: '0.5rem' }} /> New Session
+              </button>
+              
+              <button className="btn-bouncy btn-yellow" onClick={createTestGame} disabled={loading}>
+                Create 'TEST' Game
               </button>
             </div>
             
             <div className={styles.sessionList}>
               {sessions.length === 0 && <p className={styles.emptyText}>No game sessions created yet.</p>}
-              {sessions.map(session => (
-                <div key={session.id} className={styles.sessionCard} onClick={() => loadGameDetails(session)}>
+              {sessions.map((session, i) => (
+                <motion.div 
+                  key={session.id} 
+                  initial={{ opacity: 0, x: -20 }} 
+                  animate={{ opacity: 1, x: 0 }} 
+                  transition={{ ...neoSpring, delay: i * 0.05 }}
+                  className={styles.sessionCard} 
+                  onClick={() => loadGameDetails(session)}
+                >
                   <div className={styles.sessionInfo}>
-                    <h3>Session ID: {session.id.split("-")[0]}...</h3>
-                    <p>Created: {new Date(session.created_at).toLocaleDateString()} {new Date(session.created_at).toLocaleTimeString()}</p>
+                    <h3>ID: {session.id.split("-")[0]}</h3>
+                    <p>{new Date(session.created_at).toLocaleDateString()} {new Date(session.created_at).toLocaleTimeString()}</p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <span className={`${styles.statusBadge} ${session.status === 'active' ? styles.statusActive : styles.statusCompleted}`}>
                       {session.status}
                     </span>
+                    <button className={styles.iconBtnDanger} onClick={(e) => deleteSession(session.id, e)}>
+                      <Trash2 size={20} />
+                    </button>
                   </div>
-                  <button className={styles.iconButtonDanger} onClick={(e) => deleteSession(session.id, e)} title="Delete Session">
-                    <Trash2 size={20} />
-                  </button>
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.main>
         ) : (
-          <motion.main key="game-details" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+          <motion.main key="game-details" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={neoSpring}>
+            
+            {/* Live Leaderboard row */}
+            <div className={styles.leaderboardRow}>
+              {teams.map(t => (
+                <div key={t.id} className={`${styles.leaderboardCard} ${styles[`bg${t.color}`]}`}>
+                  <span className={styles.lbColor}>{t.color}</span>
+                  <span className={styles.lbStep}>Step {t.current_clue_index}</span>
+                  {t.is_selected && <Check size={16} title="Locked in" />}
+                </div>
+              ))}
+            </div>
+
             <div className={styles.gameIdBox}>
-              <p>Session ID (Share this):</p>
-              <h3>{activeGame.id}</h3>
-              <button 
-                className={styles.copyButton}
-                onClick={() => {
-                  const link = `${window.location.origin}/join?gameId=${activeGame.id}`;
-                  navigator.clipboard.writeText(link);
-                  alert("Direct Join Link copied to clipboard!");
-                }}
-              >
-                <Copy size={16} style={{ marginRight: '0.5rem' }} /> Copy Direct Join Link
+              <div>
+                <p>Session Direct Link</p>
+                <h3>{`${window.location.origin}/join?gameId=${activeGame.id}`}</h3>
+              </div>
+              <button className="btn-bouncy btn-ink" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/join?gameId=${activeGame.id}`)}>
+                <Copy size={16} style={{ marginRight: '0.5rem' }} /> Copy Link
               </button>
             </div>
 
             {winningTeam && (
-              <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={styles.winnerBanner}>
-                <Trophy size={48} color="gold" />
-                <h2>{winningTeam.color} Team Wins!</h2>
+              <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className={styles.winnerBanner}>
+                <Trophy size={48} color="var(--color-ink)" style={{ fill: 'var(--color-yellow)' }} />
+                <h2>{winningTeam.color} Team Won!</h2>
               </motion.div>
             )}
 
             <div className={styles.adminGrid}>
-              <div className={styles.card}>
+              <div className="neo-card">
                 <h2>Add Clue</h2>
                 <form onSubmit={addClue} className={styles.form}>
                   <label>Target Team</label>
@@ -231,59 +255,68 @@ export default function AdminDashboard() {
                   <label>Clue / Riddle</label>
                   <textarea className={styles.input} rows={3} value={clueContent} onChange={e => setClueContent(e.target.value)} required />
 
-                  <label>Wellness Fact (Shown after scan)</label>
+                  <label>Wellness Fact</label>
                   <textarea className={styles.input} rows={2} value={wellnessFact} onChange={e => setWellnessFact(e.target.value)} required />
 
-                  <button type="submit" className="btn-bouncy btn-orange" style={{ width: '100%', marginTop: '1rem' }}>
+                  <button type="submit" className="btn-bouncy btn-success" style={{ width: '100%', marginTop: '1rem' }}>
                     <Plus /> Add Clue
                   </button>
                 </form>
               </div>
 
-              <div className={styles.card}>
-                <h2>Manage Clues & Pins (Delphi)</h2>
-                <p className={styles.subtext}>Copy pins for QR codes. Edit or delete clues below.</p>
+              <div className="neo-card">
+                <h2>Clues & Pins</h2>
+                <p className={styles.subtext}>Copy pins for QR generation in Delphi.</p>
                 
                 <div className={styles.clueList}>
-                  {teams.map(team => (
-                    <div key={team.id} className={styles.teamSection}>
-                      <h3 className={styles[`text${team.color}`]}>{team.color} Team</h3>
-                      {clues.filter(c => c.team_id === team.id).length === 0 && <p className={styles.emptyTextSm}>No clues yet.</p>}
-                      {clues.filter(c => c.team_id === team.id).map(clue => (
-                        <div key={clue.id} className={styles.clueItem}>
-                          <div className={styles.clueHeader}>
-                            <span className={styles.stepBadge}>Step {clue.step_number}</span>
-                            <code className={styles.pinCode}>{clue.pin_code}</code>
-                            <div className={styles.clueActions}>
-                              {editingClueId === clue.id ? (
-                                <>
-                                  <button className={styles.iconButtonSuccess} onClick={() => saveEditClue(clue.id)}><Check size={16} /></button>
-                                  <button className={styles.iconButton} onClick={cancelEdit}><X size={16} /></button>
-                                </>
-                              ) : (
-                                <>
-                                  <button className={styles.iconButton} onClick={() => startEditClue(clue)}><Edit2 size={16} /></button>
-                                  <button className={styles.iconButtonDanger} onClick={() => deleteClue(clue.id)}><Trash2 size={16} /></button>
-                                </>
-                              )}
+                  {teams.map(team => {
+                    const teamClues = clues.filter(c => c.team_id === team.id);
+                    if (teamClues.length === 0) return null;
+                    return (
+                      <div key={team.id} className={styles.teamSection}>
+                        <h3 className={styles[`text${team.color}`]}>{team.color}</h3>
+                        {teamClues.map(clue => (
+                          <div key={clue.id} className={styles.clueItem}>
+                            <div className={styles.clueHeader}>
+                              <span className={styles.stepBadge}>{clue.step_number}</span>
+                              
+                              {/* The "Receipt" style pin */}
+                              <div className={styles.receiptPin} onClick={() => navigator.clipboard.writeText(clue.pin_code)}>
+                                <code>{clue.pin_code}</code>
+                                <Copy size={12} />
+                              </div>
+
+                              <div className={styles.clueActions}>
+                                {editingClueId === clue.id ? (
+                                  <>
+                                    <button className={styles.iconBtnSuccess} onClick={() => saveEditClue(clue.id)}><Check size={16} /></button>
+                                    <button className={styles.iconBtnDanger} onClick={() => setEditingClueId(null)}><X size={16} /></button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button className={styles.iconBtnBase} onClick={() => startEditClue(clue)}><Edit2 size={16} /></button>
+                                    <button className={styles.iconBtnDanger} onClick={() => deleteClue(clue.id)}><Trash2 size={16} /></button>
+                                  </>
+                                )}
+                              </div>
                             </div>
+                            
+                            {editingClueId === clue.id ? (
+                              <div className={styles.editForm}>
+                                <textarea className={styles.inputSm} value={editClueContent} onChange={e => setEditClueContent(e.target.value)} />
+                                <textarea className={styles.inputSm} value={editWellnessFact} onChange={e => setEditWellnessFact(e.target.value)} />
+                              </div>
+                            ) : (
+                              <>
+                                <p className={styles.cluePreview}><strong>C:</strong> {clue.content}</p>
+                                <p className={styles.cluePreview}><strong>W:</strong> {clue.wellness_fact}</p>
+                              </>
+                            )}
                           </div>
-                          
-                          {editingClueId === clue.id ? (
-                            <div className={styles.editForm}>
-                              <textarea className={styles.inputSm} value={editClueContent} onChange={e => setEditClueContent(e.target.value)} placeholder="Clue text..." />
-                              <textarea className={styles.inputSm} value={editWellnessFact} onChange={e => setEditWellnessFact(e.target.value)} placeholder="Wellness fact..." />
-                            </div>
-                          ) : (
-                            <>
-                              <p className={styles.cluePreview}><strong>Clue:</strong> {clue.content}</p>
-                              <p className={styles.cluePreview}><strong>Fact:</strong> {clue.wellness_fact}</p>
-                            </>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ))}
+                        ))}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             </div>

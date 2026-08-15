@@ -1,6 +1,5 @@
 .container {
   min-height: 100vh;
-  background-color: var(--color-background);
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
@@ -9,7 +8,6 @@
 .header {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -17,134 +15,113 @@
 .backButton {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
   font-weight: 700;
-  color: var(--color-text-secondary);
   font-size: 1.1rem;
-  cursor: pointer;
 }
 
 .title {
-  font-size: 2.5rem;
-  font-weight: 900;
+  font-size: 3rem;
+  text-transform: uppercase;
 }
 
-/* Session List Styles */
 .sessionHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 2rem;
-}
-
-.sessionHeader h2 {
-  font-size: 2rem;
-  font-weight: 800;
 }
 
 .sessionList {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .sessionCard {
-  background-color: var(--color-surface);
+  background: white;
+  border: var(--border-width) solid var(--color-ink);
   padding: 1.5rem;
-  border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  border-radius: var(--radius);
+  /* Shallow shadow for workspace */
+  box-shadow: 4px 4px 0 var(--color-ink);
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-  border: 2px solid transparent;
 }
 
 .sessionCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-  border-color: var(--color-blue);
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--color-ink);
 }
 
-.sessionInfo h3 {
-  font-size: 1.25rem;
-  font-weight: 800;
-  margin-bottom: 0.25rem;
-}
-
-.sessionInfo p {
-  color: var(--color-text-secondary);
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-}
+.sessionInfo h3 { font-size: 1.5rem; }
+.sessionInfo p { font-family: var(--font-body); font-weight: 600; color: var(--color-text-secondary); }
 
 .statusBadge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 100px;
-  font-size: 0.75rem;
-  font-weight: 800;
-  text-transform: uppercase;
+  font-family: var(--font-display);
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border: 2px solid var(--color-ink);
+  border-radius: 4px;
+}
+.statusActive { background: var(--color-success); }
+.statusCompleted { background: var(--color-paper); }
+
+/* Workspace specific */
+.gameIdBox {
+  background: white;
+  border: var(--border-width) solid var(--color-ink);
+  box-shadow: 4px 4px 0 var(--color-ink);
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.statusActive { background: rgba(28, 176, 246, 0.1); color: var(--color-blue); }
-.statusCompleted { background: rgba(88, 204, 2, 0.1); color: var(--color-success); }
+.gameIdBox p { font-family: var(--font-display); font-weight: 700; font-size: 1rem; }
+.gameIdBox h3 { font-family: monospace; font-size: 1.25rem; font-weight: 700; }
 
-/* Game Details Styles */
-.gameIdBox {
-  background-color: var(--color-surface);
-  padding: 1rem 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  border: 2px dashed var(--color-blue);
+.leaderboardRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 
-.gameIdBox p {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-  font-weight: 700;
-}
-
-.gameIdBox h3 {
-  font-family: monospace;
-  font-size: 1.25rem;
-  color: var(--color-text-primary);
-  margin-bottom: 0.5rem;
-}
-
-.copyButton {
-  display: flex;
-  align-items: center;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--color-blue);
-  background: rgba(28, 176, 246, 0.1);
+.leaderboardCard {
+  border: 2px solid var(--color-ink);
   padding: 0.5rem 1rem;
   border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  box-shadow: 2px 2px 0 var(--color-ink);
 }
 
-.copyButton:hover {
-  background: rgba(28, 176, 246, 0.2);
-}
+.bgBlue { background: var(--color-blue); color: white; }
+.bgRed { background: var(--color-red); color: white; }
+.bgYellow { background: var(--color-yellow); }
+.bgOrange { background: var(--color-orange); }
+.textBlue { color: var(--color-blue); }
+.textRed { color: var(--color-red); }
+.textYellow { color: #DFA900; }
+.textOrange { color: var(--color-orange); }
 
 .winnerBanner {
-  background-color: var(--color-surface);
+  background: var(--color-yellow);
+  border: var(--border-width) solid var(--color-ink);
+  box-shadow: 6px 6px 0 var(--color-ink);
   padding: 2rem;
-  border-radius: 24px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  border-radius: var(--radius);
   display: flex;
   align-items: center;
   gap: 1.5rem;
   margin-bottom: 2rem;
-  border: 4px solid gold;
-}
-
-.winnerBanner h2 {
-  font-size: 2rem;
-  font-weight: 900;
 }
 
 .adminGrid {
@@ -152,170 +129,98 @@
   grid-template-columns: 1fr;
   gap: 2rem;
 }
-
 @media (min-width: 768px) {
-  .adminGrid {
-    grid-template-columns: 1fr 1fr;
-  }
+  .adminGrid { grid-template-columns: 1fr 1fr; }
 }
 
-.card {
-  background-color: var(--color-surface);
-  padding: 2rem;
-  border-radius: 24px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.05);
-}
-
-.card h2 {
-  font-size: 1.5rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
-}
-
-.subtext {
-  color: var(--color-text-secondary);
-  margin-bottom: 1.5rem;
-  font-weight: 600;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form label {
-  font-weight: 700;
-  color: var(--color-text-primary);
-  font-size: 0.9rem;
-}
+.form { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+.form label { font-family: var(--font-display); font-weight: 700; }
 
 .input {
   width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
-  border: 2px solid #E5E7EB;
-  font-family: inherit;
+  padding: 1rem;
+  border: var(--border-width) solid var(--color-ink);
+  border-radius: 8px;
+  font-family: var(--font-body);
   font-size: 1rem;
   font-weight: 600;
   outline: none;
-  background-color: var(--color-background);
 }
-
-.input:focus {
-  border-color: var(--color-blue);
-}
+.input:focus { box-shadow: 4px 4px 0 var(--color-ink); }
 
 .inputSm {
   width: 100%;
   padding: 0.5rem;
-  border-radius: 8px;
-  border: 2px solid #E5E7EB;
-  font-family: inherit;
+  border: 2px solid var(--color-ink);
+  border-radius: 4px;
+  font-family: var(--font-body);
   font-size: 0.875rem;
   outline: none;
-  background-color: var(--color-surface);
 }
 
-.teamSection {
-  margin-bottom: 2rem;
-}
+.teamSection { margin-bottom: 2rem; }
+.teamSection h3 { font-family: var(--font-display); margin-bottom: 1rem; }
 
-.textBlue { color: var(--color-blue); }
-.textRed { color: var(--color-red); }
-.textYellow { color: var(--color-yellow-dark); }
-.textOrange { color: var(--color-orange); }
-
-.clueList {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  max-height: 500px;
-  overflow-y: auto;
-  padding-right: 1rem;
-}
+.clueList { max-height: 600px; overflow-y: auto; padding-right: 1rem; margin-top: 1.5rem; }
 
 .clueItem {
-  background-color: var(--color-background);
+  background: var(--color-paper);
+  border: 2px solid var(--color-ink);
   padding: 1rem;
-  border-radius: 12px;
-  margin-bottom: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  box-shadow: 2px 2px 0 var(--color-ink);
 }
 
 .clueHeader {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .stepBadge {
-  background-color: var(--color-text-primary);
-  color: var(--color-surface);
+  background: var(--color-ink);
+  color: white;
+  font-family: var(--font-display);
   padding: 0.25rem 0.5rem;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 800;
+  border-radius: 4px;
 }
 
-.pinCode {
-  font-size: 1.25rem;
+/* Receipt Style Pin */
+.receiptPin {
+  background: white;
+  border: 2px dashed var(--color-ink);
+  padding: 0.25rem 0.5rem;
+  font-family: monospace;
   font-weight: 900;
-  letter-spacing: 0.1em;
-  flex-grow: 1;
-}
-
-.clueActions {
   display: flex;
-  gap: 0.25rem;
-}
-
-.iconButton {
-  padding: 0.5rem;
-  border-radius: 8px;
-  color: var(--color-text-secondary);
-  background: transparent;
-  transition: all 0.2s;
-}
-.iconButton:hover { background: #E5E7EB; color: var(--color-text-primary); }
-
-.iconButtonDanger {
-  padding: 0.5rem;
-  border-radius: 8px;
-  color: var(--color-red);
-  background: rgba(255, 75, 75, 0.1);
-  transition: all 0.2s;
-}
-.iconButtonDanger:hover { background: rgba(255, 75, 75, 0.2); }
-
-.iconButtonSuccess {
-  padding: 0.5rem;
-  border-radius: 8px;
-  color: var(--color-success);
-  background: rgba(88, 204, 2, 0.1);
-  transition: all 0.2s;
-}
-.iconButtonSuccess:hover { background: rgba(88, 204, 2, 0.2); }
-
-.cluePreview {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-.editForm {
-  display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 0.5rem;
-  margin-top: 0.5rem;
+  cursor: pointer;
+  flex-grow: 1;
+  transition: background 0.1s;
 }
+.receiptPin:active { background: #E5E7EB; }
 
-.emptyText, .emptyTextSm {
-  color: var(--color-text-secondary);
-  font-weight: 600;
+.clueActions { display: flex; gap: 0.5rem; }
+
+.iconBtnBase, .iconBtnDanger, .iconBtnSuccess {
+  padding: 0.5rem;
+  border: 2px solid var(--color-ink);
+  border-radius: 4px;
+  background: white;
+  display: flex;
+  align-items: center;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 2px 2px 0 var(--color-ink);
 }
-.emptyTextSm { font-size: 0.9rem; }
+.iconBtnBase:active, .iconBtnDanger:active, .iconBtnSuccess:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 transparent;
+}
+.iconBtnDanger { background: var(--color-red); color: white; }
+.iconBtnSuccess { background: var(--color-success); }
+
+.cluePreview { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.25rem; }
+.editForm { display: flex; flex-direction: column; gap: 0.5rem; }
