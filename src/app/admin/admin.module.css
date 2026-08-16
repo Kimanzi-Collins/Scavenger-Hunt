@@ -224,3 +224,18 @@
 
 .cluePreview { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.25rem; }
 .editForm { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(13, 13, 13, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}

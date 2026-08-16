@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { ChevronLeft, Plus, Copy, Trophy, Trash2, Edit2, Check, X } from "lucide-react";
+import { ChevronLeft, Plus, Copy, Trophy, Trash2, Edit2, Check, X, Image as ImageIcon, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import styles from "./admin.module.css";
 import { motion, AnimatePresence } from "framer-motion";
@@ -38,6 +38,44 @@ export default function AdminDashboard() {
   const [editClueContent, setEditClueContent] = useState("");
   const [editWellnessFact, setEditWellnessFact] = useState("");
   const [editSelectedGif, setEditSelectedGif] = useState("");
+
+  const [gifSearchOpen, setGifSearchOpen] = useState(false);
+  const [gifSearchQuery, setGifSearchQuery] = useState("");
+  const [gifResults, setGifResults] = useState<{id: string, url: string, preview: string}[]>([]);
+  const [isSearchingGifs, setIsSearchingGifs] = useState(false);
+  const [gifModalTarget, setGifModalTarget] = useState<'add' | 'edit'>('add');
+
+  const searchGifs = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!gifSearchQuery) return;
+    setIsSearchingGifs(true);
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GIPHY_API_KEY;
+      if (!apiKey) {
+        alert("Please add NEXT_PUBLIC_GIPHY_API_KEY to your .env.local file to enable GIF search!");
+        setIsSearchingGifs(false);
+        return;
+      }
+      const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(gifSearchQuery)}&limit=24`);
+      const data = await res.json();
+      if (data.data) {
+        setGifResults(data.data.map((g: any) => ({
+          id: g.id,
+          url: g.images.original.url,
+          preview: g.images.fixed_height_small.url
+        })));
+      }
+    } catch (err) {
+      alert("Failed to search GIFs.");
+    }
+    setIsSearchingGifs(false);
+  };
+
+  const handleSelectGif = (url: string) => {
+    if (gifModalTarget === 'add') setSelectedGif(url);
+    else setEditSelectedGif(url);
+    setGifSearchOpen(false);
+  };
 
   useEffect(() => {
     fetchSessions();
@@ -296,11 +334,17 @@ export default function AdminDashboard() {
                   <textarea className={styles.input} rows={2} value={wellnessFact} onChange={e => setWellnessFact(e.target.value)} required />
 
                   <label>Reaction GIF (Optional)</label>
-                  <select value={selectedGif} onChange={e => setSelectedGif(e.target.value)} className={styles.input}>
-                    {AVAILABLE_GIFS.map(g => (
-                      <option key={g.id} value={g.url}>{g.name}</option>
-                    ))}
-                  </select>
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <button type="button" className="btn-bouncy btn-blue" onClick={() => { setGifModalTarget('add'); setGifSearchOpen(true); }}>
+                      <ImageIcon size={20} style={{ marginRight: '0.5rem' }} /> Search Giphy
+                    </button>
+                    {selectedGif && (
+                      <div style={{ position: 'relative' }}>
+                        <img src={selectedGif} alt="Selected" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: '4px', border: '2px solid var(--color-ink)' }} />
+                        <button type="button" onClick={() => setSelectedGif("")} style={{ position: 'absolute', top: -10, right: -10, background: 'var(--color-red)', color: 'white', borderRadius: '50%', border: '2px solid var(--color-ink)', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><X size={14}/></button>
+                      </div>
+                    )}
+                  </div>
 
                   <button type="submit" className="btn-bouncy btn-success" style={{ width: '100%', marginTop: '1rem' }}>
                     <Plus /> Add Clue
@@ -349,14 +393,29 @@ export default function AdminDashboard() {
                               <div className={styles.editForm}>
                                 <textarea className={styles.inputSm} value={editClueContent} onChange={e => setEditClueContent(e.target.value)} />
                                 <textarea className={styles.inputSm} value={editWellnessFact} onChange={e => setEditWellnessFact(e.target.value)} />
-                                <select value={editSelectedGif} onChange={e => setEditSelectedGif(e.target.value)} className={styles.inputSm}>
-                                  {AVAILABLE_GIFS.map(g => <option key={g.id} value={g.url}>{g.name}</option>)}
-                                </select>
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                  <button type="button" className="btn-bouncy btn-blue" style={{ flex: 1, padding: '0.5rem', fontSize: '0.9rem' }} onClick={() => { setGifModalTarget('edit'); setGifSearchOpen(true); }}>
+                                    <ImageIcon size={16} style={{ marginRight: '0.5rem' }} /> Search Giphy
+                                  </button>
+                                  {editSelectedGif && (
+                                    <div style={{ position: 'relative' }}>
+                                      <img src={editSelectedGif} alt="Selected" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: '4px', border: '2px solid var(--color-ink)' }} />
+                                      <button type="button" onClick={() => setEditSelectedGif("")} style={{ position: 'absolute', top: -8, right: -8, background: 'var(--color-red)', color: 'white', borderRadius: '50%', border: '2px solid var(--color-ink)', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}><X size={12}/></button>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             ) : (
                               <>
                                 <p className={styles.cluePreview}><strong>C:</strong> {clue.content}</p>
                                 <p className={styles.cluePreview}><strong>W:</strong> {clue.wellness_fact.split("|||")[0]}</p>
+                                {clue.wellness_fact.split("|||")[1] && (
+                                  <img 
+                                    src={clue.wellness_fact.split("|||")[1]} 
+                                    alt="Preview" 
+                                    style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: '4px', border: '2px solid var(--color-ink)', marginTop: '0.5rem' }} 
+                                  />
+                                )}
                               </>
                             )}
                           </div>
@@ -368,6 +427,39 @@ export default function AdminDashboard() {
               </div>
             </div>
           </motion.main>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {gifSearchOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className={styles.modalOverlay}>
+            <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="neo-card" style={{ maxWidth: '500px', width: '90%', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0 }}>Search Giphy</h3>
+                <button className={styles.iconBtnDanger} onClick={() => setGifSearchOpen(false)}><X size={20} /></button>
+              </div>
+              <form onSubmit={searchGifs} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                <input type="text" className={styles.input} placeholder="Search for a GIF..." value={gifSearchQuery} onChange={e => setGifSearchQuery(e.target.value)} autoFocus />
+                <button type="submit" className="btn-bouncy btn-ink" disabled={isSearchingGifs}>
+                  <Search size={20} />
+                </button>
+              </form>
+              <div style={{ flex: 1, overflowY: 'auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', padding: '0.5rem' }}>
+                {isSearchingGifs && <p style={{ gridColumn: '1 / -1', textAlign: 'center' }}>Searching...</p>}
+                {!isSearchingGifs && gifResults.map(g => (
+                  <motion.img 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    key={g.id} 
+                    src={g.preview} 
+                    alt="GIF" 
+                    onClick={() => handleSelectGif(g.url)} 
+                    style={{ width: '100%', height: '100px', objectFit: 'cover', cursor: 'pointer', borderRadius: '4px', border: '2px solid var(--color-ink)' }} 
+                  />
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
