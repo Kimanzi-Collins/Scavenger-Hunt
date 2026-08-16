@@ -153,7 +153,8 @@ export default function GamePage({ params }: { params: Promise<{ teamId: string 
     
     const currentClue = clues[team!.current_clue_index];
     if (decodedText.includes(currentClue.pin_code)) {
-      setRandomGif(FUNNY_GIFS[Math.floor(Math.random() * FUNNY_GIFS.length)]);
+      const [factText, gifUrl] = currentClue.wellness_fact.split("|||");
+      setRandomGif(gifUrl || FUNNY_GIFS[Math.floor(Math.random() * FUNNY_GIFS.length)]);
       setShowWellnessFact(true);
       // Auto advance to next clue reveal after 2 seconds
       setTimeout(() => setShowNextClue(true), 2000);
@@ -314,7 +315,7 @@ export default function GamePage({ params }: { params: Promise<{ teamId: string 
             >
               <h3 className={styles.factTitle}>Wellness Fact</h3>
               <div className={styles.wellnessBox}>
-                <p>{currentClue.wellness_fact}</p>
+                <p>{currentClue.wellness_fact.split("|||")[0]}</p>
               </div>
 
               <img src={randomGif} alt="Reaction" className={styles.trollGif} />

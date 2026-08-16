@@ -13,6 +13,14 @@ type Clue = { id: string; team_id: string; step_number: number; pin_code: string
 
 const neoSpring = { type: "spring" as const, stiffness: 400, damping: 17 };
 
+const AVAILABLE_GIFS = [
+  { id: "random", name: "Random Funny GIF", url: "" },
+  { id: "highfive", name: "High Five", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2I3aGN0a2Z4Z2l6cjJ4cWFyZ3p2a2J3YXkyeWp1aGRxaXFzeHp0eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKSjRrfIPjeiVyM/giphy.gif" },
+  { id: "dance", name: "Troll Dance", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjR6c2d1bXF4eTN2bXExOWIwcHhxN2Z4dWQ1bzF6M2MxbDN4YXhqayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l0HlBO7eyXzSZkJri/giphy.gif" },
+  { id: "mindblown", name: "Mind Blown", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbXN6cmJ6Z3V5dWJ5M2Z2b2F5ZWQzajF5ejF6M3V6OXJzYnJzYnJzZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26ufnwz3wDUli7GU0/giphy.gif" },
+  { id: "celebrate", name: "Office Celebrate", url: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaG1tNXh6Z3V5dWJ5M2Z2b2F5ZWQzajF5ejF6M3V6OXJzYnJzYnJzZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/13CoXDiaCcCoyk/giphy.gif" }
+];
+
 export default function AdminDashboard() {
   const [sessions, setSessions] = useState<GameSession[]>([]);
   const [activeGame, setActiveGame] = useState<GameSession | null>(null);
@@ -24,10 +32,12 @@ export default function AdminDashboard() {
   const [selectedTeamId, setSelectedTeamId] = useState<string>("");
   const [clueContent, setClueContent] = useState("");
   const [wellnessFact, setWellnessFact] = useState("");
+  const [selectedGif, setSelectedGif] = useState("");
   
   const [editingClueId, setEditingClueId] = useState<string | null>(null);
   const [editClueContent, setEditClueContent] = useState("");
   const [editWellnessFact, setEditWellnessFact] = useState("");
+  const [editSelectedGif, setEditSelectedGif] = useState("");
 
   useEffect(() => {
     fetchSessions();
@@ -136,15 +146,18 @@ export default function AdminDashboard() {
     const pin = Math.random().toString(36).substring(2, 8).toUpperCase();
     const teamClues = clues.filter(c => c.team_id === selectedTeamId);
     const stepNumber = teamClues.length + 1;
+    
+    const finalWellnessFact = selectedGif ? `${wellnessFact}|||${selectedGif}` : wellnessFact;
 
     const { data, error } = await supabase.from("clues").insert([{
-      team_id: selectedTeamId, step_number: stepNumber, pin_code: pin, content: clueContent, wellness_fact: wellnessFact
+      team_id: selectedTeamId, step_number: stepNumber, pin_code: pin, content: clueContent, wellness_fact: finalWellnessFact
     }]).select().single();
 
     if (data) {
       setClues([...clues, data]);
       setClueContent("");
       setWellnessFact("");
+      setSelectedGif("");
     } else alert("Error adding clue: " + error?.message);
   };
 
@@ -156,13 +169,16 @@ export default function AdminDashboard() {
   };
 
   const startEditClue = (clue: Clue) => {
+    const [factText, gifUrl] = clue.wellness_fact.split("|||");
     setEditingClueId(clue.id);
     setEditClueContent(clue.content);
-    setEditWellnessFact(clue.wellness_fact);
+    setEditWellnessFact(factText || "");
+    setEditSelectedGif(gifUrl || "");
   };
 
   const saveEditClue = async (id: string) => {
-    const { data } = await supabase.from("clues").update({ content: editClueContent, wellness_fact: editWellnessFact }).eq("id", id).select().single();
+    const finalWellnessFact = editSelectedGif ? `${editWellnessFact}|||${editSelectedGif}` : editWellnessFact;
+    const { data } = await supabase.from("clues").update({ content: editClueContent, wellness_fact: finalWellnessFact }).eq("id", id).select().single();
     if (data) {
       setClues(clues.map(c => c.id === id ? data : c));
       setEditingClueId(null);
@@ -279,6 +295,13 @@ export default function AdminDashboard() {
                   <label>Wellness Fact</label>
                   <textarea className={styles.input} rows={2} value={wellnessFact} onChange={e => setWellnessFact(e.target.value)} required />
 
+                  <label>Reaction GIF (Optional)</label>
+                  <select value={selectedGif} onChange={e => setSelectedGif(e.target.value)} className={styles.input}>
+                    {AVAILABLE_GIFS.map(g => (
+                      <option key={g.id} value={g.url}>{g.name}</option>
+                    ))}
+                  </select>
+
                   <button type="submit" className="btn-bouncy btn-success" style={{ width: '100%', marginTop: '1rem' }}>
                     <Plus /> Add Clue
                   </button>
@@ -326,11 +349,14 @@ export default function AdminDashboard() {
                               <div className={styles.editForm}>
                                 <textarea className={styles.inputSm} value={editClueContent} onChange={e => setEditClueContent(e.target.value)} />
                                 <textarea className={styles.inputSm} value={editWellnessFact} onChange={e => setEditWellnessFact(e.target.value)} />
+                                <select value={editSelectedGif} onChange={e => setEditSelectedGif(e.target.value)} className={styles.inputSm}>
+                                  {AVAILABLE_GIFS.map(g => <option key={g.id} value={g.url}>{g.name}</option>)}
+                                </select>
                               </div>
                             ) : (
                               <>
                                 <p className={styles.cluePreview}><strong>C:</strong> {clue.content}</p>
-                                <p className={styles.cluePreview}><strong>W:</strong> {clue.wellness_fact}</p>
+                                <p className={styles.cluePreview}><strong>W:</strong> {clue.wellness_fact.split("|||")[0]}</p>
                               </>
                             )}
                           </div>
