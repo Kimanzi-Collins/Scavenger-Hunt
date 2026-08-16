@@ -77,8 +77,11 @@ function JoinGameContent() {
     return () => { supabase.removeChannel(channel); };
   }, [gameId, teams.length]);
 
+  const [hasSelectedTeam, setHasSelectedTeam] = useState(false);
+
   const selectTeam = async (team: Team) => {
-    if (team.is_selected) return;
+    if (team.is_selected || hasSelectedTeam) return;
+    setHasSelectedTeam(true);
 
     // Optimistic Lock Thump
     setTeams(current => current.map(t => (t.id === team.id ? { ...t, is_selected: true } : t)));
@@ -87,6 +90,7 @@ function JoinGameContent() {
 
     if (error) {
       alert("This team was already taken!");
+      setHasSelectedTeam(false);
       fetchTeams(gameId);
     } else {
       setTimeout(() => {
@@ -135,7 +139,7 @@ function JoinGameContent() {
                         whileTap={!isTakenByOther ? { scale: 0.9, x: 6, y: 6, boxShadow: "0 0 0 #0D0D0D" } : {}}
                         className={`${styles.teamCard} ${styles[`team${team.color}`]} ${isTakenByOther ? styles.taken : ''}`}
                         onClick={() => selectTeam(team)}
-                        disabled={isTakenByOther}
+                        disabled={isTakenByOther || hasSelectedTeam}
                       >
                         <span>{team.color}</span>
                         

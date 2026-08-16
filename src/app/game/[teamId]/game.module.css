@@ -157,7 +157,6 @@
   margin-top: 1rem;
   height: 200px;
   object-fit: cover;
-  filter: grayscale(100%) contrast(120%); /* Stylized GIF */
 }
 
 .nextClueBox {
