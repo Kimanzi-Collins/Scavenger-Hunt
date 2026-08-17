@@ -8,7 +8,7 @@ import Confetti from "react-confetti";
 import styles from "./game.module.css";
 import { CheckCircle, QrCode, AlertCircle, Trophy, Users } from "lucide-react";
 
-type Team = { id: string; color: string; current_clue_index: number; game_id: string; is_selected: boolean };
+type Team = { id: string; color: string; current_clue_index: number; game_id: string; is_selected: boolean; completed_at: string | null };
 type Clue = { id: string; step_number: number; pin_code: string; content: string; wellness_fact: string };
 type GameSession = { id: string; winner_team_id: string | null; status: string };
 
@@ -72,19 +72,22 @@ export default function GamePage({ params }: { params: Promise<{ teamId: string 
   }, [team?.game_id]);
 
   useEffect(() => {
-    // ARCADE MODE RESET: If this is a test game, automatically reset it 15 seconds after victory
-    if (gameSession?.winner_team_id && gameSession.status === 'test' && team && gameSession.winner_team_id === team.id) {
+    // ARCADE MODE RESET: If this is a test game, automatically reset it 5 seconds after EVERYONE finishes
+    const finishedTeams = allTeams.filter(t => t.completed_at !== null);
+    const allFinished = finishedTeams.length === 4;
+    
+    if (allFinished && gameSession?.status === 'test' && team && gameSession.winner_team_id === team.id) {
       const timer = setTimeout(async () => {
         console.log("Arcade Mode: Resetting test game for next group...");
         await supabase.from("game_sessions").update({ winner_team_id: null }).eq("id", gameSession.id);
-        await supabase.from("teams").update({ current_clue_index: 0, is_selected: false }).eq("game_id", gameSession.id);
+        await supabase.from("teams").update({ current_clue_index: 0, is_selected: false, completed_at: null }).eq("game_id", gameSession.id);
         
         // Push the winner back to the lobby so they can see it unlock
         window.location.href = `/join?gameId=${gameSession.id}`;
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [gameSession?.winner_team_id, gameSession?.status, team?.id]);
+  }, [allTeams, gameSession?.status, team?.id, gameSession?.winner_team_id]);
 
   const fetchGameData = async () => {
     const { data: teamData } = await supabase.from("teams").select("*").eq("id", teamId).single();
@@ -105,6 +108,9 @@ export default function GamePage({ params }: { params: Promise<{ teamId: string 
 
   const checkWinCondition = async (currentTeam: Team, currentClues: Clue[], session: GameSession | null) => {
     if (currentClues.length > 0 && currentTeam.current_clue_index >= currentClues.length) {
+      if (!currentTeam.completed_at) {
+        await supabase.from("teams").update({ completed_at: new Date().toISOString() }).eq("id", currentTeam.id).is("completed_at", null);
+      }
       if (!session?.winner_team_id) {
         await supabase.from("game_sessions").update({ winner_team_id: currentTeam.id }).eq("id", currentTeam.game_id).is("winner_team_id", null);
       }
@@ -226,30 +232,59 @@ export default function GamePage({ params }: { params: Promise<{ teamId: string 
     );
   }
 
-  if (gameSession.winner_team_id) {
-    const isOurTeamWinner = gameSession.winner_team_id === team.id;
-    const winnerColor = allTeams.find(t => t.id === gameSession.winner_team_id)?.color;
+  const finishedTeams = allTeams.filter(t => t.completed_at !== null).sort((a, b) => new Date(a.completed_at!).getTime() - new Date(b.completed_at!).getTime());
+  const allFinished = finishedTeams.length === 4;
+  const isOurTeamFinished = team.completed_at !== null;
 
-    return (
-      <div className={`${styles.container} ${isOurTeamWinner ? styles[`bg${team.color}`] : styles.bgPaper}`}>
-        {isOurTeamWinner && <Confetti width={windowSize.width} height={windowSize.height} colors={['#3D5AFE', '#FF3B3B', '#FFD93D', '#FF7A00', '#0D0D0D']} />}
-        <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={neoSpring} className={styles.winnerCard}>
-          {isOurTeamWinner ? (
-            <>
-              <Trophy size={100} strokeWidth={2.5} color="var(--color-ink)" style={{ fill: "var(--color-yellow)" }} />
-              <h1>VICTORY!</h1>
-              <p>Your team found all the clues first!</p>
-            </>
-          ) : (
-            <>
-              <AlertCircle size={100} strokeWidth={2.5} color="var(--color-ink)" style={{ fill: "var(--color-red)" }} />
-              <h1>GAME OVER</h1>
-              <p>The <strong>{winnerColor}</strong> Team won the hunt!</p>
-            </>
-          )}
-        </motion.div>
-      </div>
-    );
+  if (isOurTeamFinished) {
+    if (allFinished) {
+      const ourRank = finishedTeams.findIndex(t => t.id === team.id) + 1;
+      const isOurTeamWinner = ourRank === 1;
+
+      return (
+        <div className={`${styles.container} ${isOurTeamWinner ? styles[`bg${team.color}`] : styles.bgPaper}`}>
+          {isOurTeamWinner && <Confetti width={windowSize.width} height={windowSize.height} colors={['#3D5AFE', '#FF3B3B', '#FFD93D', '#FF7A00', '#0D0D0D']} />}
+          <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={neoSpring} className={styles.winnerCard}>
+            {isOurTeamWinner ? (
+              <>
+                <Trophy size={80} strokeWidth={2.5} color="var(--color-ink)" style={{ fill: "var(--color-yellow)" }} />
+                <h1>1ST PLACE!</h1>
+                <p>Your team found all the clues first!</p>
+              </>
+            ) : (
+              <>
+                <h1 style={{ fontSize: '3rem', margin: '0.5rem 0' }}>{ourRank}{ourRank === 2 ? 'ND' : ourRank === 3 ? 'RD' : 'TH'} PLACE</h1>
+                <p>You completed the hunt!</p>
+              </>
+            )}
+            
+            <div style={{ marginTop: '2rem', textAlign: 'left', width: '100%', borderTop: '2px solid var(--color-ink)', paddingTop: '1rem' }}>
+              <h3 style={{ marginBottom: '1rem', textAlign: 'center' }}>Final Leaderboard</h3>
+              {finishedTeams.map((ft, i) => (
+                <div key={ft.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0', fontWeight: ft.id === team.id ? 'bold' : 'normal', fontSize: '1.2rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ fontSize: '1.5rem', minWidth: '40px', textAlign: 'center' }}>#{i + 1}</span>
+                    <span className={styles[`text${ft.color}`]}>{ft.color} Team</span>
+                  </div>
+                  {i === 0 && <Trophy size={20} style={{ fill: 'var(--color-yellow)', stroke: 'var(--color-ink)' }} />}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      );
+    } else {
+      return (
+        <div className={styles.container}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="neo-card" style={{ maxWidth: '400px', margin: 'auto', textAlign: 'center' }}>
+            <CheckCircle size={64} color="var(--color-success)" style={{ margin: '0 auto 1rem auto' }} />
+            <h2 className={styles.waitingTitle}>You finished!</h2>
+            <p className={styles.waitingSub}>Waiting for other teams to complete the hunt...</p>
+            <h3 style={{ marginTop: '1.5rem', fontFamily: 'var(--font-display)' }}>{finishedTeams.length} / 4 Finished</h3>
+          </motion.div>
+        </div>
+      );
+    }
   }
 
   const currentClue = clues[team.current_clue_index];

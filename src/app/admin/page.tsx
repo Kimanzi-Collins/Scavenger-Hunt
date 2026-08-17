@@ -8,7 +8,7 @@ import styles from "./admin.module.css";
 import { motion, AnimatePresence } from "framer-motion";
 
 type GameSession = { id: string; status: string; winner_team_id: string | null; created_at: string };
-type Team = { id: string; game_id: string; color: string; current_clue_index: number; is_selected: boolean };
+type Team = { id: string; game_id: string; color: string; current_clue_index: number; is_selected: boolean; completed_at: string | null };
 type Clue = { id: string; team_id: string; step_number: number; pin_code: string; content: string; wellness_fact: string };
 
 const neoSpring = { type: "spring" as const, stiffness: 400, damping: 17 };
@@ -172,7 +172,7 @@ export default function AdminDashboard() {
     if (!activeGame) return;
     if (confirm("Reset this game? This will unlock all teams and clear progress.")) {
       await supabase.from("game_sessions").update({ winner_team_id: null }).eq("id", activeGame.id);
-      await supabase.from("teams").update({ current_clue_index: 0, is_selected: false }).eq("game_id", activeGame.id);
+      await supabase.from("teams").update({ current_clue_index: 0, is_selected: false, completed_at: null }).eq("game_id", activeGame.id);
       alert("Game has been reset!");
     }
   };
